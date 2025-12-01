@@ -1,0 +1,6 @@
+val_size: 1000
+test_size: 1000
+
+cols:
+  description: str
+  salary: float32

@@ -1,0 +1,10 @@
+*.onnx
+
+env/
+__pycache__/
+mlruns/
+
+chpts/
+notebooks/
+data/preprocessed/*
+data/raw/*

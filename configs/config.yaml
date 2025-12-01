@@ -1,0 +1,22 @@
+data_source: D:\Projects\Parsers\HHParser\database.db
+
+data_dir: data/
+raw_data_dir: data/raw/
+preprocessed_data_dir: data/preprocessed/
+
+raw_data: vacancies.csv
+train_data: train_vacancies.csv
+val_data: val_vacancies.csv
+test_data: test_vacancies.csv
+
+chpts_dir: chpts/
+
+val_size: 1000
+test_size: 1000
+
+random_state: 2002
+
+text: description
+target: salary
+
+mlflow_uri: http://127.0.0.1:8080
