@@ -18,5 +18,3 @@ random_state: 2002
 
 text: description
 target: salary
-
-mlflow_uri: http://127.0.0.1:8080

@@ -10,5 +10,7 @@ class BertModel(nn.Module):
         self.head = nn.Linear(256, 1)
 
     def forward(self, x, attention_mask=None):
-        x = self.bert(x, attention_mask=attention_mask)["last_hidden_state"][:, 0, :]
+        x = self.bert(x, attention_mask=attention_mask)["last_hidden_state"][
+            :, 0, :
+        ]
         return self.head(x)

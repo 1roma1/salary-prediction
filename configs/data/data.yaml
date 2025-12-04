@@ -1,0 +1,2 @@
+tokenizer: sberbank-ai/ruElectra-small
+max_length: 256
