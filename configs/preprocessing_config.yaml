@@ -2,5 +2,11 @@ val_size: 1000
 test_size: 1000
 
 cols:
+  role: int
+  experience: str
+  employment: str
   description: str
   salary: float32
+
+min_salary: 400
+max_salary: 10000

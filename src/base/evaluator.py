@@ -2,18 +2,24 @@ import mlflow
 import onnx_ir
 import torch
 import torch.nn as nn
-import numpy as np
 from torch.utils.data import DataLoader, Dataset
+from torchmetrics import R2Score
 
 from src.base.utils import get_or_create_experiment
 from src.base.registries import LossRegistry, ModelRegistry
 
 
-def to_onnx(model: nn.Module, sample: torch.Tensor):
+def to_onnx(model: nn.Module, sample: tuple):
     model.eval()
     model = model.to("cpu")
-    input = sample.unsqueeze(0)
-    return onnx_ir.to_proto(torch.onnx.export(model, input, dynamo=True).model)
+    description = sample[0].unsqueeze(0)
+    features = sample[1].unsqueeze(0)
+    attn_mask = sample[3].unsqueeze(0)
+    return onnx_ir.to_proto(
+        torch.onnx.export(
+            model, (description, features, attn_mask), dynamo=True
+        ).model
+    )
 
 
 class Evaluator:
@@ -32,14 +38,21 @@ class Evaluator:
     ) -> tuple[float, float]:
         model.eval()
         test_loss = 0
+        r2_score_metric = R2Score()
         with torch.no_grad():
-            for inputs, labels in test_dataloader:
-                inputs, labels = inputs.to(device), labels.to(device)
-                y_pred = model(inputs)
-                test_loss += loss_fn(y_pred, labels).item()
-
+            for descriptions, features, labels, mask in test_dataloader:
+                descriptions, features, labels, mask = (
+                    descriptions.to(device),
+                    features.to(device),
+                    labels.to(device),
+                    mask.to(device),
+                )
+                y_pred = model(descriptions, features, mask)
+                test_loss += loss_fn(y_pred.reshape(-1), labels).item()
+                r2_score_metric.update(y_pred.reshape(-1), labels)
+        r2_score = r2_score_metric.compute()
         test_loss /= len(test_dataloader)
-        return test_loss
+        return test_loss, r2_score
 
     def evaluate(
         self,
@@ -73,16 +86,16 @@ class Evaluator:
         mlflow.set_experiment(experiment_id=experiment_id)
 
         with mlflow.start_run(experiment_id=experiment_id):
-            test_loss = self._evaluate(
+            test_loss, r2_score = self._evaluate(
                 test_dataloader,
-                len(self.test_dataset.label_to_int),
                 model,
                 loss_fn,
                 device,
             )
-            print(f"Train loss - {test_loss}")
+            print(f"Test loss - {test_loss} | r2 score: {r2_score}")
 
             mlflow.log_metric("test_loss", test_loss)
+            mlflow.log_metric("r2_score", r2_score)
 
             mlflow.log_params(
                 {
@@ -98,10 +111,10 @@ class Evaluator:
             mlflow.log_params(train_config.get("loss_fn_params", {}))
             mlflow.log_params(data_config.get("params", {}))
 
-            onnx_model = to_onnx(model, self.test_dataset[0][0])
+            onnx_model = to_onnx(model, self.test_dataset[0])
             mlflow.onnx.log_model(
                 onnx_model,
                 "model",
-                input_example=self.test_dataset[0][0].numpy()[np.newaxis],
+                # input_example=self.test_dataset[0][0].numpy()[np.newaxis],
                 save_as_external_data=False,
             )

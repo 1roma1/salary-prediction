@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
+from torchmetrics import R2Score
 
 from tqdm import tqdm
 from pathlib import Path
@@ -32,12 +33,19 @@ class Trainer:
         model.train()
         train_loss = 0.0
         batch_iterator = tqdm(train_dataloader)
-        for batch_idx, (inputs, labels) in enumerate(batch_iterator):
-            inputs, labels = inputs.to(device), labels.to(device)
+        for batch_idx, (descriptions, features, labels, mask) in enumerate(
+            batch_iterator
+        ):
+            descriptions, features, labels, mask = (
+                descriptions.to(device),
+                features.to(device),
+                labels.to(device),
+                mask.to(device),
+            )
 
             with torch.autocast(device_type=device, dtype=torch.bfloat16):
-                outputs = model(inputs)
-                loss = loss_fn(outputs, labels)
+                outputs = model(descriptions, features, mask)
+                loss = loss_fn(outputs.reshape(-1), labels)
 
             loss = loss / grad_accum
             loss.backward()
@@ -63,13 +71,21 @@ class Trainer:
     ) -> float:
         model.eval()
         val_loss = 0
+        r2_score_metric = R2Score()
         with torch.no_grad():
-            for inputs, labels in val_dataloader:
-                inputs, labels = inputs.to(device), labels.to(device)
-                y_pred = model(inputs)
-                val_loss += loss_fn(y_pred, labels).item()
+            for descriptions, features, labels, mask in val_dataloader:
+                descriptions, features, labels, mask = (
+                    descriptions.to(device),
+                    features.to(device),
+                    labels.to(device),
+                    mask.to(device),
+                )
+                y_pred = model(descriptions, features, mask)
+                val_loss += loss_fn(y_pred.reshape(-1), labels).item()
+                r2_score_metric.update(y_pred.reshape(-1), labels)
+        r2_score = r2_score_metric.compute()
         val_loss /= len(val_dataloader)
-        return val_loss
+        return val_loss, r2_score
 
     def train(
         self,
@@ -128,13 +144,13 @@ class Trainer:
                     device,
                     train_config.get("grad_accum", 1),
                 )
-                val_loss = self._val_epoch(
+                val_loss, r2_score = self._val_epoch(
                     val_dataloader, model, loss_fn, device
                 )
 
                 print(
                     f"Epoch {epoch}: train loss - {train_loss} | "
-                    f"val loss - {val_loss}"
+                    f"val loss - {val_loss} | r2 score: {r2_score}"
                 )
 
                 if val_loss < best_loss:
@@ -155,6 +171,7 @@ class Trainer:
 
                 mlflow.log_metric("train_loss", train_loss, step=epoch)
                 mlflow.log_metric("val_loss", val_loss, step=epoch)
+                mlflow.log_metric("r2_score", r2_score, step=epoch)
 
             mlflow.log_params(
                 {

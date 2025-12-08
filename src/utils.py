@@ -1,3 +1,4 @@
+import json
 import yaml
 import pandas as pd
 
@@ -11,6 +12,14 @@ def load_configuration(config_file: str) -> Dict:
     with open(config_file, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
     return config
+
+
+def load_json(filename: str):
+    """Load json data from file"""
+
+    with open(filename, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return data
 
 
 def get_schema(dictionary):

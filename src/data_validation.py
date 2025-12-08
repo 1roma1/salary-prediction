@@ -9,6 +9,9 @@ from src.utils import load_configuration
 
 
 class DataSchema(BaseModel):
+    experience: int
+    employment: int
+    role: int
     description: str
     salary: float
 

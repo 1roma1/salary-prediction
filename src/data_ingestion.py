@@ -12,10 +12,13 @@ def fetch_data_from_db(date: str) -> None:
     config = load_configuration("configs/config.yaml")
 
     vacancy_sql_stmt = """
-    SELECT id, date(substr(published_at, 0, 11)) as date, description, salary
+    SELECT vacancy.id, date(substr(published_at, 0, 11)) as date, description,
+        employment, experience, salary, role.name as role
     FROM vacancy
+    LEFT JOIN vacancy_roles ON vacancy.id = vacancy_roles.vacancy_id
+    LEFT JOIN role ON vacancy_roles.role_id = role.id
     WHERE date(substr(published_at, 0, 11)) < date("{date}") and
-          salary NOT NULL
+        salary NOT NULL
     """.format(
         date=date
     )

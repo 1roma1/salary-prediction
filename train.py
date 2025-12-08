@@ -4,6 +4,7 @@ import argparse
 import pandas as pd
 
 from pathlib import Path
+from dotenv import load_dotenv
 
 from src.base.trainer import Trainer
 from src.datasets import SalaryDataset
@@ -57,4 +58,5 @@ def train() -> None:
 
 
 if __name__ == "__main__":
+    load_dotenv()
     train()

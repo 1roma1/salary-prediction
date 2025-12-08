@@ -5,7 +5,7 @@ import pandas as pd
 from nltk.corpus import stopwords
 from pathlib import Path
 
-from src.utils import load_configuration
+from src.utils import load_configuration, load_json
 
 STOP_WORDS = stopwords.words("russian") + stopwords.words("english")
 
@@ -46,8 +46,19 @@ def remove_stop_words(text: str) -> str:
 
 
 class Preprocessor:
-    def __init__(self, config=None):
+    def __init__(self, features, config=None):
+        self.features = features
         self.config = config
+
+        self.experience = {
+            feature: i for i, feature in enumerate(self.features["experience"])
+        }
+        self.employment = {
+            feature: i for i, feature in enumerate(self.features["employment"])
+        }
+        self.role = {
+            feature: i for i, feature in enumerate(self.features["role"])
+        }
 
     def _normalize_salary(self, salary: str) -> float:
         currency_map = {
@@ -81,15 +92,32 @@ class Preprocessor:
             text = func(text)
         return text
 
+    def _map_experience(self, string: str):
+        return self.experience.get(string)
+
+    def _map_employment(self, string: str):
+        return self.employment.get(string)
+
+    def _map_role(self, string: str):
+        return self.role.get(string)
+
     def preprocess(self, df: pd.DataFrame) -> pd.DataFrame:
-        df = df[["description", "salary"]]
+        df = df[["description", "experience", "employment", "role", "salary"]]
 
         df = df.assign(
             salary=df.salary.apply(lambda x: self._normalize_salary(x)),
             description=df.description.apply(
                 lambda x: self._normalize_text(x)
             ),
+            experience=df.experience.apply(lambda x: self._map_experience(x)),
+            employment=df.employment.apply(lambda x: self._map_employment(x)),
+            role=df.role.apply(lambda x: self._map_role(x)),
         )
+
+        df = df[
+            (df.salary > self.config["min_salary"])
+            & (df.salary < self.config["max_salary"])
+        ]
 
         return df
 
@@ -99,6 +127,7 @@ if __name__ == "__main__":
     preprocessing_config = load_configuration(
         "configs/preprocessing_config.yaml"
     )
+    features = load_json("data/features.json")
 
     raw_train = pd.read_csv(
         Path(config["raw_data_dir"]) / config["train_data"]
@@ -111,7 +140,7 @@ if __name__ == "__main__":
         f"Test - {raw_test.shape}"
     )
 
-    preprocessor = Preprocessor(preprocessing_config)
+    preprocessor = Preprocessor(features, preprocessing_config)
     preprocessed_train = preprocessor.preprocess(raw_train)
     preprocessed_val = preprocessor.preprocess(raw_val)
     preprocessed_test = preprocessor.preprocess(raw_test)

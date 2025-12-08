@@ -1,12 +1,16 @@
 model: bert
 model_params:
   bert_model: sberbank-ai/ruElectra-small
+  hid_size: 256
 
+optimizer: adamw
 optimizer_params:
-  lr: 0.0001
+  lr: 0.00005
+
+loss_fn: mse
 
 device: cuda:0
-epochs: 25
+epochs: 40
 batch_size: 64
 num_workers: 4
 pin_memory: True
