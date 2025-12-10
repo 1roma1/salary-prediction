@@ -1,4 +1,4 @@
-# Car price prediction
+# Salary prediction
 This repository hosts a machine learning project designed to predict the salary of job vacancies. The project includes a complete machine learning pipeline, covering data ingestion, data processing, model training, evaluation, experiment tracking with MLflow.
 
 ## Getting Started
