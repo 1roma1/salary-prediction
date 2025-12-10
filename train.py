@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 from src.base.trainer import Trainer
 from src.datasets import SalaryDataset
-from src.utils import load_configuration
+from src.utils import load_yaml
 
 
 def get_argv() -> dict:
@@ -32,9 +32,9 @@ def get_argv() -> dict:
 
 def train() -> None:
     argv = get_argv()
-    config = load_configuration("configs/config.yaml")
-    train_config = load_configuration(argv["train_config"])
-    data_config = load_configuration(argv["data_config"])
+    config = load_yaml("configs/config.yaml")
+    train_config = load_yaml(argv["train_config"])
+    data_config = load_yaml(argv["data_config"])
 
     train_data_file = Path(
         config["preprocessed_data_dir"], config["train_data"]

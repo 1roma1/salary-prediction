@@ -13,9 +13,9 @@ class SalaryDataset(Dataset):
         self.descriptions = df.description.tolist()
         self.salaries = df.salary.tolist()
 
-        self.max_experience = 4
-        self.max_employment = 3
-        self.max_role = 174
+        self.max_experience = len(self.roles)
+        self.max_employment = len(self.employments)
+        self.max_role = len(self.roles)
 
         self.log_target = config.get("log_target")
         self.max_length = config.get("max_length")

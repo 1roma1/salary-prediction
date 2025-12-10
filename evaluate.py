@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 from src.base.evaluator import Evaluator
 from src.datasets import SalaryDataset
-from src.base.utils import load_configuration
+from src.base.utils import load_yaml
 
 
 def get_argv() -> dict:
@@ -33,9 +33,9 @@ def get_argv() -> dict:
 
 def evaluate() -> None:
     argv = get_argv()
-    config = load_configuration("configs/config.yaml")
-    train_config = load_configuration(argv["train_config"])
-    data_config = load_configuration(argv["data_config"])
+    config = load_yaml("configs/config.yaml")
+    train_config = load_yaml(argv["train_config"])
+    data_config = load_yaml(argv["data_config"])
 
     test_data_file = Path(config["preprocessed_data_dir"], config["test_data"])
     test_df = pd.read_csv(test_data_file)
