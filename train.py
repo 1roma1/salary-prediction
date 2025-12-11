@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 from src.base.trainer import Trainer
 from src.datasets import SalaryDataset
-from src.utils import load_yaml
+from src.base.utils import load_yaml
 
 
 def get_argv() -> dict:

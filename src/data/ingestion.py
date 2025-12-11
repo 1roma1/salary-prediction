@@ -5,15 +5,15 @@ import pandas as pd
 
 from pathlib import Path
 
-from src.utils import load_configuration
+from src.base.utils import load_yaml
 
 
 def fetch_data_from_db(date: str) -> None:
-    config = load_configuration("configs/config.yaml")
+    config = load_yaml("configs/config.yaml")
 
     vacancy_sql_stmt = """
     SELECT vacancy.id, date(substr(published_at, 0, 11)) as date, description,
-        employment, experience, salary, role.name as role
+        title, employment, experience, salary, role.name as role
     FROM vacancy
     LEFT JOIN vacancy_roles ON vacancy.id = vacancy_roles.vacancy_id
     LEFT JOIN role ON vacancy_roles.role_id = role.id
@@ -27,7 +27,7 @@ def fetch_data_from_db(date: str) -> None:
         data = pd.read_sql(vacancy_sql_stmt, conn)
     os.makedirs(config["raw_data_dir"], exist_ok=True)
     data.to_csv(
-        Path(config["raw_data_dir"]) / config["raw_data"],
+        Path(config["raw_data_dir"]) / config["all_data"],
         index=False,
     )
 

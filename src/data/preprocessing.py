@@ -5,7 +5,7 @@ import pandas as pd
 from nltk.corpus import stopwords
 from pathlib import Path
 
-from src.utils import load_configuration, load_json
+from src.base.utils import load_yaml, load_json
 
 STOP_WORDS = stopwords.words("russian") + stopwords.words("english")
 
@@ -63,7 +63,7 @@ class Preprocessor:
     def _normalize_salary(self, salary: str) -> float:
         currency_map = {
             "BYR": 1,
-            "USD": 2.9743,
+            "USD": 2.95,
             "EUR": 3.4473,
             "RUR": 0.036639,
             "KZT": 0.00057104,
@@ -102,13 +102,23 @@ class Preprocessor:
         return self.role.get(string)
 
     def preprocess(self, df: pd.DataFrame) -> pd.DataFrame:
-        df = df[["description", "experience", "employment", "role", "salary"]]
+        df = df[
+            [
+                "description",
+                "title",
+                "experience",
+                "employment",
+                "role",
+                "salary",
+            ]
+        ]
 
         df = df.assign(
             salary=df.salary.apply(lambda x: self._normalize_salary(x)),
             description=df.description.apply(
                 lambda x: self._normalize_text(x)
             ),
+            title=df.title.apply(lambda x: self._normalize_text(x)),
             experience=df.experience.apply(lambda x: self._map_experience(x)),
             employment=df.employment.apply(lambda x: self._map_employment(x)),
             role=df.role.apply(lambda x: self._map_role(x)),
@@ -123,43 +133,19 @@ class Preprocessor:
 
 
 if __name__ == "__main__":
-    config = load_configuration("configs/config.yaml")
-    preprocessing_config = load_configuration(
-        "configs/preprocessing_config.yaml"
-    )
+    config = load_yaml("configs/config.yaml")
+    preprocessing_config = load_yaml("configs/preprocessing_config.yaml")
     features = load_json("data/features.json")
 
-    raw_train = pd.read_csv(
-        Path(config["raw_data_dir"]) / config["train_data"]
-    )
-    raw_val = pd.read_csv(Path(config["raw_data_dir"]) / config["val_data"])
-    raw_test = pd.read_csv(Path(config["raw_data_dir"]) / config["test_data"])
-
-    print(
-        f"Raw data shape: Train - {raw_train.shape} Val - {raw_val.shape} "
-        f"Test - {raw_test.shape}"
-    )
+    raw_data = pd.read_csv(Path(config["raw_data_dir"]) / config["all_data"])
+    print(f"Raw data shape: {raw_data.shape}")
 
     preprocessor = Preprocessor(features, preprocessing_config)
-    preprocessed_train = preprocessor.preprocess(raw_train)
-    preprocessed_val = preprocessor.preprocess(raw_val)
-    preprocessed_test = preprocessor.preprocess(raw_test)
-
-    print(
-        f"Preprocessed data shape: Train - {preprocessed_train.shape} "
-        f"Val - {preprocessed_val.shape} Test - {preprocessed_test.shape}"
-    )
+    preprocessed_data = preprocessor.preprocess(raw_data)
+    print(f"Preprocessed data shape: {preprocessed_data.shape}")
 
     os.makedirs(config["preprocessed_data_dir"], exist_ok=True)
-    preprocessed_train.to_csv(
-        Path(config["preprocessed_data_dir"]) / config["train_data"],
-        index=False,
-    )
-    preprocessed_val.to_csv(
-        Path(config["preprocessed_data_dir"]) / config["val_data"],
-        index=False,
-    )
-    preprocessed_test.to_csv(
-        Path(config["preprocessed_data_dir"]) / config["test_data"],
+    preprocessed_data.to_csv(
+        Path(config["preprocessed_data_dir"]) / config["all_data"],
         index=False,
     )

@@ -11,11 +11,12 @@ class SalaryDataset(Dataset):
         self.employments = df.employment.tolist()
         self.roles = df.role.tolist()
         self.descriptions = df.description.tolist()
+        self.titles = df.title.tolist()
         self.salaries = df.salary.tolist()
 
-        self.max_experience = len(self.roles)
-        self.max_employment = len(self.employments)
-        self.max_role = len(self.roles)
+        self.max_experience = 4
+        self.max_employment = 3
+        self.max_role = 174
 
         self.log_target = config.get("log_target")
         self.max_length = config.get("max_length")
@@ -25,8 +26,8 @@ class SalaryDataset(Dataset):
         return len(self.descriptions)
 
     def __getitem__(self, idx):
-        tokenized_description = self.tokenizer(
-            self.descriptions[idx],
+        tokenized_text = self.tokenizer(
+            self.titles[idx] + " " + self.descriptions[idx],
             return_tensors="pt",
             padding="max_length",
             max_length=self.max_length,
@@ -52,8 +53,8 @@ class SalaryDataset(Dataset):
         ).type(torch.float32)
 
         return (
-            tokenized_description["input_ids"][0],
+            tokenized_text["input_ids"][0],
             features,
             torch.log1p(salary) if self.log_target else salary,
-            tokenized_description["attention_mask"][0],
+            tokenized_text["attention_mask"][0],
         )

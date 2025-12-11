@@ -33,18 +33,23 @@ class Trainer:
         model.train()
         train_loss = 0.0
         batch_iterator = tqdm(train_dataloader)
-        for batch_idx, (descriptions, features, labels, mask) in enumerate(
-            batch_iterator
-        ):
-            descriptions, features, labels, mask = (
-                descriptions.to(device),
-                features.to(device),
-                labels.to(device),
-                mask.to(device),
-            )
+        for batch_idx, (
+            descriptions,
+            features,
+            labels,
+            mask,
+        ) in enumerate(batch_iterator):
+            descriptions = descriptions.to(device)
+            features = features.to(device)
+            labels = labels.to(device)
+            mask = mask.to(device)
 
             with torch.autocast(device_type=device, dtype=torch.bfloat16):
-                outputs = model(descriptions, features, mask)
+                outputs = model(
+                    descriptions,
+                    features,
+                    mask,
+                )
                 loss = loss_fn(outputs.reshape(-1), labels)
 
             loss = loss / grad_accum
@@ -73,14 +78,22 @@ class Trainer:
         val_loss = 0
         r2_score_metric = R2Score()
         with torch.no_grad():
-            for descriptions, features, labels, mask in val_dataloader:
-                descriptions, features, labels, mask = (
-                    descriptions.to(device),
-                    features.to(device),
-                    labels.to(device),
-                    mask.to(device),
+            for (
+                descriptions,
+                features,
+                labels,
+                mask,
+            ) in val_dataloader:
+                descriptions = descriptions.to(device)
+                features = features.to(device)
+                labels = labels.to(device)
+                mask = mask.to(device)
+
+                y_pred = model(
+                    descriptions,
+                    features,
+                    mask,
                 )
-                y_pred = model(descriptions, features, mask)
                 val_loss += loss_fn(y_pred.reshape(-1), labels).item()
                 r2_score_metric.update(y_pred.reshape(-1), labels)
         r2_score = r2_score_metric.compute()

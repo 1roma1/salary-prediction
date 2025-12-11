@@ -5,7 +5,7 @@ from pathlib import Path
 from pydantic import BaseModel
 from pandantic import Pandantic
 
-from src.utils import load_configuration
+from src.base.utils import load_yaml
 
 
 class DataSchema(BaseModel):
@@ -13,6 +13,7 @@ class DataSchema(BaseModel):
     employment: int
     role: int
     description: str
+    title: str
     salary: float
 
 
@@ -22,7 +23,7 @@ def validate_data(df: pd.DataFrame):
 
 
 if __name__ == "__main__":
-    config = load_configuration("configs/config.yaml")
+    config = load_yaml("configs/config.yaml")
 
     train_data_path = Path(
         config["preprocessed_data_dir"], config["train_data"]

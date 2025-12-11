@@ -3,7 +3,7 @@ import yaml
 import mlflow
 
 
-def load_configuration(config_file: str) -> dict:
+def load_yaml(config_file: str) -> dict:
     """Load configuration from yaml file"""
 
     with open(config_file, "r", encoding="utf-8") as f:
