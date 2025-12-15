@@ -14,11 +14,9 @@ class BertModel(nn.Module):
 
         self.bert = AutoModel.from_pretrained(bert_model)
         self.feat_enc = nn.Linear(cat_size, lin_hid_size)
-        # self.title_enc = nn.Linear(bert_hid_size, 32)
         self.head = nn.Linear(bert_hid_size + lin_hid_size, 1)
 
         self.dropout = nn.Dropout(p=dropout)
-        # self.title_bn = nn.BatchNorm1d(32)
         self.feat_bn = nn.BatchNorm1d(lin_hid_size)
 
     def forward(

@@ -1,6 +1,7 @@
 *.onnx
 .env
 
+.venv/
 env/
 __pycache__/
 mlruns/

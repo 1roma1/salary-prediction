@@ -4,6 +4,7 @@ model_params:
   bert_hid_size: 256
   cat_size: 181
   lin_hid_size: 64
+  dropout: 0.1
 
 optimizer: adamw
 optimizer_params:
